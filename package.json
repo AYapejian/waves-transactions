@@ -1,13 +1,14 @@
 {
   "name": "waves-transactions",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "lib/server.js",
   "license": "MIT",
   "scripts": {
-      "dev": "nodemon --exec 'node --inspect-brk index'"
+    "dev": "nodemon --exec 'node --inspect lib/server'"
   },
   "dependencies": {
-    "axios": "^0.17.1"
+    "axios": "^0.17.1",
+    "express": "^4.16.2"
   },
   "devDependencies": {
     "nodemon": "^1.15.1"
