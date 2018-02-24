@@ -1,5 +1,6 @@
 /* eslint-disable no-console, no-process-env */
-const axios  = require('axios');
+import axios from 'axios';
+
 const transferClient = axios.create({
     baseURL: 'https://nodes.wavesnodes.com',
     timeout: 20000
@@ -36,7 +37,7 @@ const internals = {
     },
     getSymbol(assetId) {
         if (!symbols) throw new Error('must load symbols first');
-        if (assetId === 'WAVES') return assetId;    // If WAVES then just return it, special case
+        if (assetId === 'WAVES') assetId;
 
         const results = symbols.filter(s => (s.assetID === assetId));
         return results.length ? results[0].symbol : null;
@@ -54,9 +55,10 @@ const internals = {
         let results = markets.filter(m => {
             return (m.amountAssetID === assetId);
         });
-        // TODO: Extract only the needed properties from the market for the single asset ( opposed to market pair )
+
         if (results.length) {
             results = results[0];
+
             return {
                 amountAssetID:       results.amountAssetID,
                 amountAssetDecimals: results.amountAssetDecimals,
@@ -124,16 +126,19 @@ const internals = {
                     const assetDetails = internals.getMarketAsset(assetId);
 
                     readable.assetId      = assetId;
-                    readable.assetDetails = assetDetails;
                     readable.assetSymbol  = internals.getSymbol(assetId);
+                    readable.assetDetails = assetDetails;
+                    // readable.assetSymbol  = readable.assetSymbol || (assetDetails) ? assetDetails.amountAssetName : null;
                 }
+
                 if (t.hasOwnProperty('feeAsset')) {
                     const feeAssetId = t.feeAsset || 'WAVES';
                     const feeAssetDetails = internals.getMarketAsset(feeAssetId);
 
                     readable.feeAssetId      = feeAssetId;
-                    readable.feeAssetDetails = feeAssetDetails;
                     readable.feeAssetSymbol  = internals.getSymbol(feeAssetId);
+                    readable.feeAssetDetails = feeAssetDetails;
+                    // readable.feeAssetSymbol   = readable.feeAssetSymbol || (feeAssetDetails) ? feeAssetDetails.amountAssetName : null;
                 }
 
                 if (orders) readable.orders = orders;
@@ -146,12 +151,12 @@ const internals = {
     }
 };
 
-exports.fetchTransactions = async function(walletAddress, limit = 50) {
+export const fetchTransactions = async function(walletAddress, limit = 50) {
     if (!symbols) await internals.loadSymbols();
     if (!markets) await internals.loadMarkets();
     const transactions = await internals.getTransactions(walletAddress, limit);
     return transactions;
-}
+};
 
 // const address = process.argv[2] || process.env.WAVES_TRANSACTION_WALLET;
 // if (!address) throw new Error('Must supply wallet address as first argument or set WAVES_WALLET environment variable');
