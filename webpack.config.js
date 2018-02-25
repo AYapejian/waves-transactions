@@ -31,7 +31,8 @@ module.exports = {
                 include: [
                     path.resolve(__dirname, 'src'),
                     require.resolve('bootstrap-vue'),
-                    require.resolve('axios')
+                    require.resolve('axios'),
+                    require.resolve('vue-spinner')
                 ]
             },
             {
