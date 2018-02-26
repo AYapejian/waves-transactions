@@ -50,6 +50,9 @@ export default class Waves {
         for (let t of transactions) {
             const transaction    = await this._normalizeTransaction(t);
             transaction.orders = await this._getOrders(t);
+
+            if (transaction.recipient === address) transaction.isIncoming = true;
+            if (transaction.sender === address)    transaction.isOutgoing = true;
             list.push(transaction);
         }
         return list;
