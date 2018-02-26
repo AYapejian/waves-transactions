@@ -2,14 +2,22 @@
 <div>
     <!-- Table Toolbar -->
     <b-row>
-        <b-col col="6">
+        <b-col>
             <b-form-group label="Transaction Types">
-                <b-form-radio-group buttons v-model="typeFilterSelected" :options="typeFilterOptions" />
+                <b-dropdown :text="`${typeFilterSelected.text}`">
+                    <b-dropdown-item @click="(typeFilterSelected = opt)" v-for="opt of typeFilterOptions" :key="opt.value">
+                        {{ opt.text }}
+                    </b-dropdown-item>
+                </b-dropdown>
             </b-form-group>
         </b-col>
         <b-col>
             <b-form-group label="Transaction Direction">
-                <b-form-radio-group buttons v-model="directionFilterSelected" :options="directionFilterOptions" />
+                <b-dropdown :text="`${directionFilterSelected.text}`">
+                    <b-dropdown-item @click="(directionFilterSelected = opt)" v-for="opt of directionFilterOptions" :key="opt.value">
+                        {{ opt.text }}
+                    </b-dropdown-item>
+                </b-dropdown>
                 <b-button variant="info" class="button" @click="exportToCsv"> Export CSV </b-button>
             </b-form-group>
         </b-col>
@@ -147,6 +155,8 @@
 
 <script>
 import Waves from './waves';
+const Papa = require('papaparse/papaparse.min.js');
+
 export default {
     name: 'TransactionsTable',
     props: {
@@ -156,13 +166,13 @@ export default {
     data () {
         return {
             isLoading:          false,
-            typeFilterSelected: 'all',
+            typeFilterSelected: { text: 'All', value: 'all' },
             directionFilterOptions: [
                 { text: 'All',      value: 'all'      },
                 { text: 'Incoming', value: 'Incoming' },
                 { text: 'Outgoing', value: 'Outgoing' }
             ],
-            directionFilterSelected: 'all'
+            directionFilterSelected: { text: 'All', value: 'all' }
         }
     },
     computed: {
@@ -181,17 +191,17 @@ export default {
         tableTransactions() {
             if (!this.transactions || !this.transactions.length) return null;
             let tableTransactions = this.formatTransactionsForTable(this.transactions);
-            if (this.typeFilterSelected === 'all' && this.directionFilterSelected === 'all') return tableTransactions;
+            if (this.typeFilterSelected.value === 'all' && this.directionFilterSelected.value === 'all') return tableTransactions;
 
-            if (this.typeFilterSelected !== 'all') {
+            if (this.typeFilterSelected.value !== 'all') {
                 tableTransactions = tableTransactions.filter(t => {
                     return (t.original.type)
-                        ? (t.original.type.id === this.typeFilterSelected)
+                        ? (t.original.type.id === this.typeFilterSelected.value)
                         : false;
                 });
             }
-            if (this.directionFilterSelected !== 'all') {
-                tableTransactions = tableTransactions.filter(t => (t.direction === this.directionFilterSelected));
+            if (this.directionFilterSelected.value !== 'all') {
+                tableTransactions = tableTransactions.filter(t => (t.direction === this.directionFilterSelected.value));
             }
             return tableTransactions;
 
@@ -240,6 +250,64 @@ export default {
                 return rowObject;
             });
         },
+        exportToCsv() {
+            const transactionsCsvObj = this.transactions.map(t => {
+                let date = new Date(t.timestamp);
+                date = date.toISOString();
+                const rowObject = {
+                    id:              t.id,
+                    date:            date,
+                    timestamp:       t.timestamp,
+                    height:          t.height,
+
+                    typeId:          t.type ? t.type.id    : null,
+                    typeLabel:       t.type ? t.type.label : null,
+                    isIncoming:      t.isIncoming,
+                    isExchange:      t.type ? t.type.id  === 7 : false,
+
+                    recipient:       t.recipient || null,
+                    sender:          t.sender    || null,
+                    senderPublicKey: t.senderPublicKey,
+                    signature:       t.signature,
+
+                    assetId:          t.asset.id,
+                    assetName:        t.asset.name,
+                    assetDescription: t.asset.description,
+                    assetSymbol:      t.asset.symbol,
+                    assetAmountRaw:   t.asset.amountRaw,
+                    assetAmountToken: t.asset.amountToken,
+
+                    feeAssetId:          t.fee.id,
+                    feeAssetName:        t.fee.name,
+                    feeAssetDescription: t.fee.description,
+                    feeAssetSymbol:      t.fee.symbol,
+                    feeAssetAmountRaw:   t.fee.amountRaw,
+                    feeAssetAmountToken: t.fee.amountToken,
+
+                    attachment:      t.attachment
+                };
+                return rowObject;
+            });
+
+            const csv = Papa.unparse(transactionsCsvObj);
+
+            function download(filename, text) {
+                var pom = document.createElement('a');
+                pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+                pom.setAttribute('download', filename);
+
+                if (document.createEvent) {
+                    var event = document.createEvent('MouseEvents');
+                    event.initEvent('click', true, true);
+                    pom.dispatchEvent(event);
+                }
+                else {
+                    pom.click();
+                }
+            }
+
+            download('waves-transactions.csv', csv);
+        }
     }
 }
 </script>

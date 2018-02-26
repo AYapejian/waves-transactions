@@ -32,7 +32,8 @@ module.exports = {
                     path.resolve(__dirname, 'src'),
                     require.resolve('bootstrap-vue'),
                     require.resolve('axios'),
-                    require.resolve('vue-spinner')
+                    require.resolve('vue-spinner'),
+                    require.resolve('papaparse')
                 ]
             },
             {
